@@ -29,7 +29,6 @@ func (app *application) getUserHandler(w http.ResponseWriter, r *http.Request) {
 func (app *application) followUserHandler(w http.ResponseWriter, r *http.Request) {
 	follower := getUserFromContext(r)
 
-	// Revert back to auth userId from context
 	var payload FollowUserPayload
 	if err := readJSON(w, r, &payload); err != nil {
 		app.badRequestResponse(w, r, err)
@@ -50,9 +49,8 @@ func (app *application) followUserHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (app *application) unfollowUserHandler(w http.ResponseWriter, r *http.Request) {
-	unfollowedUser := getUserFromContext(r)
+	follower := getUserFromContext(r)
 
-	//TODO: Revert back to auth userId from context
 	var payload FollowUserPayload
 	if err := readJSON(w, r, &payload); err != nil {
 		app.badRequestResponse(w, r, err)
@@ -61,7 +59,7 @@ func (app *application) unfollowUserHandler(w http.ResponseWriter, r *http.Reque
 
 	ctx := r.Context()
 
-	if err := app.store.Followers.Unfollow(ctx, unfollowedUser.ID, payload.UserId); err != nil {
+	if err := app.store.Followers.Unfollow(ctx, follower.ID, payload.UserId); err != nil {
 		app.internalServerError(w, r, err)
 		return
 	}

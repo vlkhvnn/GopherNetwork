@@ -93,28 +93,22 @@ var comments = []string{
 
 func Seed(store store.Storage) {
 	ctx := context.Background()
-	users := generateUsers(100)
-	for _, user := range users {
-		if err := store.User.Create(ctx, user); err != nil {
-			log.Println("Error creating a user: ", err)
-			return
+
+	// Assuming users are already created and fetched
+	users, err := store.User.GetAll(ctx)
+	if err != nil {
+		log.Println("Error fetching users: ", err)
+		return
+	}
+
+	// Generate and insert follower relationships
+	followers := generateFollowers(300, users)
+	for _, follower := range followers {
+		if err := store.Followers.Follow(ctx, follower.UserId, follower.FollowerId); err != nil {
+			log.Println("Error creating a follower: ", err)
 		}
 	}
-	posts := generatePosts(200, users)
-	for _, post := range posts {
-		if err := store.Post.Create(ctx, post); err != nil {
-			log.Println("Error creating a post: ", err)
-			return
-		}
-	}
-	comments := generateComments(500, users, posts)
-	for _, cmt := range comments {
-		if err := store.Comment.Create(ctx, cmt); err != nil {
-			log.Println("Error creating a post: ", err)
-			return
-		}
-	}
-	log.Println("Seeding Completed")
+	log.Println("Seeding Followers Completed")
 }
 
 func generateUsers(num int) []*store.User {
@@ -158,4 +152,21 @@ func generateComments(num int, users []*store.User, posts []*store.Post) []*stor
 		}
 	}
 	return cms
+}
+
+func generateFollowers(num int, users []*store.User) []*store.Follower {
+	followers := make([]*store.Follower, num)
+	for i := 0; i < num; i++ {
+		user := users[rand.Intn(len(users))]
+		follower := users[rand.Intn(len(users))]
+		// Ensure a user does not follow themselves
+		for user.ID == follower.ID {
+			follower = users[rand.Intn(len(users))]
+		}
+		followers[i] = &store.Follower{
+			UserId:     user.ID,
+			FollowerId: follower.ID,
+		}
+	}
+	return followers
 }

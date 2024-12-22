@@ -64,3 +64,28 @@ func (s *UserStore) GetById(ctx context.Context, id int64) (*User, error) {
 
 	return user, nil
 }
+
+func (s *UserStore) GetAll(ctx context.Context) ([]*User, error) {
+	query := `
+		SELECT id, username, email, password, created_at FROM users
+	`
+	rows, err := s.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	users := []*User{}
+	for rows.Next() {
+		user := &User{}
+		if err := rows.Scan(&user.ID, &user.Username, &user.Email, &user.Password, &user.CreatedAt); err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return users, nil
+}

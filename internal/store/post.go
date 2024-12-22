@@ -124,22 +124,23 @@ func (s *PostStore) Update(ctx context.Context, post *Post) error {
 	return nil
 }
 
-func (s *PostStore) GetUserFeed(ctx context.Context, id int64) ([]PostMetaData, error) {
+func (s *PostStore) GetUserFeed(ctx context.Context, id int64, fq PaginatedFeedQuery) ([]PostMetaData, error) {
 	query := `
-		SELECT p.id, p.user_id, p.title, p.created_at, p.version, p.tags, u.username,
+		SELECT p.id, p.user_id, p.title, p.content, p.created_at, p.updated_at, p.version, p.tags, u.username,
 		COUNT(c.id) AS comments_count
 		FROM posts p
 		LEFT JOIN comments c ON c.post_id = p.id
 		LEFT JOIN users u ON p.user_id = u.id
-		JOIN followers f ON f.follower_id = p.user_id OR p.user_id = $1
-		WHERE f.user_id = $1 OR p.user_id = $1
+		JOIN followers f ON f.user_id = p.user_id
+		WHERE f.follower_id = $1
 		GROUP BY p.id, u.username
-		ORDER BY p.created_at DESC
+		ORDER BY p.created_at ` + fq.Sort + `
+		LIMIT $2 OFFSET $3
 	`
 
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
 	defer cancel()
-	rows, err := s.db.QueryContext(ctx, query, id)
+	rows, err := s.db.QueryContext(ctx, query, id, fq.Limit, fq.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -154,6 +155,7 @@ func (s *PostStore) GetUserFeed(ctx context.Context, id int64) ([]PostMetaData, 
 			&post.Title,
 			&post.Content,
 			&post.CreatedAt,
+			&post.UpdatedAt,
 			&post.Version,
 			pq.Array(&post.Tags),
 			&post.User.Username,
