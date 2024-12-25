@@ -3,6 +3,7 @@ package main
 import (
 	"GopherNetwork/internal/db"
 	"GopherNetwork/internal/env"
+	"GopherNetwork/internal/mailer"
 	"GopherNetwork/internal/store"
 	"time"
 
@@ -39,8 +40,9 @@ func main() {
 	}
 
 	cfg := config{
-		addr:   env.GetString("ADDR", ":8080"),
-		apiURL: env.GetString("EXTERNAL_URL", "localhost:8080"),
+		addr:        env.GetString("ADDR", ":8080"),
+		apiURL:      env.GetString("EXTERNAL_URL", "localhost:8080"),
+		frontendURL: env.GetString("FRONTEND_URL", "localhost:4000"),
 		db: dbConfig{
 			addr:         env.GetString("DB_ADDR", "postgres://postgres:1234@localhost/gophernetwork?sslmode=disable"),
 			maxOpenConns: env.GetInt("DB_MAX_OPEN_CONNS", 30),
@@ -49,7 +51,11 @@ func main() {
 		},
 		env: env.GetString("ENV", "development"),
 		mail: mailConfig{
-			exp: time.Hour * 24 * 3, // 3 days
+			exp: time.Hour * 24 * 3, // 3 days,
+			mailtrap: mailTrapConfig{
+				apiKey: env.GetString("MAILTRAP_API_KEY", ""),
+			},
+			fromEmail: env.GetString("FROM_EMAIL", ""),
 		},
 	}
 
@@ -69,10 +75,15 @@ func main() {
 
 	store := store.NewStorage(db)
 
+	mailtrap, err := mailer.NewMailTrapClient(cfg.mail.mailtrap.apiKey, cfg.mail.fromEmail)
+	if err != nil {
+		logger.Fatal(err)
+	}
 	app := &application{
 		config: cfg,
 		store:  store,
 		logger: logger,
+		mailer: mailtrap,
 	}
 
 	mux := app.mount()
