@@ -26,7 +26,7 @@ const docTemplate = `{
     "paths": {
         "/authentication/token": {
             "post": {
-                "description": "Generates an auth bearer token",
+                "description": "Creates a token for a user",
                 "consumes": [
                     "application/json"
                 ],
@@ -36,7 +36,7 @@ const docTemplate = `{
                 "tags": [
                     "authentication"
                 ],
-                "summary": "Generates an auth bearer token",
+                "summary": "Creates a token",
                 "parameters": [
                     {
                         "description": "User credentials",
@@ -44,7 +44,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/main.GenerateAuthTokenPayload"
+                            "$ref": "#/definitions/main.CreateUserTokenPayload"
                         }
                     }
                 ],
@@ -227,7 +227,54 @@ const docTemplate = `{
                     }
                 }
             },
-            "put": {
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Deletes a post by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "posts"
+                ],
+                "summary": "Deletes a post",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Post ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            },
+            "patch": {
                 "security": [
                     {
                         "ApiKeyAuth": []
@@ -580,7 +627,7 @@ const docTemplate = `{
                 }
             }
         },
-        "main.GenerateAuthTokenPayload": {
+        "main.CreateUserTokenPayload": {
             "type": "object",
             "required": [
                 "email",
@@ -753,6 +800,23 @@ const docTemplate = `{
                 }
             }
         },
+        "store.Role": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "level": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "store.User": {
             "type": "object",
             "properties": {
@@ -767,6 +831,12 @@ const docTemplate = `{
                 },
                 "is_active": {
                     "type": "boolean"
+                },
+                "role": {
+                    "$ref": "#/definitions/store.Role"
+                },
+                "role_id": {
+                    "type": "integer"
                 },
                 "username": {
                     "type": "string"

@@ -84,12 +84,13 @@ func (app *application) mount() *chi.Mux {
 		r.Route("/posts", func(r chi.Router) {
 			r.Use(app.AuthTokenMiddleware)
 			r.Post("/", app.createPostHandler)
+
 			r.Route("/{postId}", func(r chi.Router) {
 				r.Use(app.postContextMiddleware)
 
 				r.Get("/", app.getPostHandler)
-				r.Delete("/", app.deletePostHandler)
-				r.Patch("/", app.updatePostHandler)
+				r.Patch("/", app.checkPostOwnershipMiddleware("moderator", app.updatePostHandler))
+				r.Delete("/", app.checkPostOwnershipMiddleware("admin", app.deletePostHandler))
 			})
 		})
 		r.Route("/users", func(r chi.Router) {
@@ -112,7 +113,7 @@ func (app *application) mount() *chi.Mux {
 		//Public Routes
 		r.Route("/authentication", func(r chi.Router) {
 			r.Post("/user", app.registerUserHandler)
-			r.Post("/token", app.generateTokenHandler)
+			r.Post("/token", app.createTokenHandler)
 		})
 	})
 	return r

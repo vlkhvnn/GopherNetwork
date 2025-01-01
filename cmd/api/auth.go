@@ -24,7 +24,7 @@ type UserWithToken struct {
 	Token string `json:"token"`
 }
 
-type GenerateAuthTokenPayload struct {
+type CreateUserTokenPayload struct {
 	Email    string `json:"email" validate:"required,email,max=255"`
 	Password string `json:"password" validate:"required,min=3,max=72"`
 }
@@ -109,33 +109,29 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 	}
 }
 
-// generateTokenHandler godoc
+// createTokenHandler godoc
 //
-//	@Summary		Generates an auth bearer token
-//	@Description	Generates an auth bearer token
+//	@Summary		Creates a token
+//	@Description	Creates a token for a user
 //	@Tags			authentication
 //	@Accept			json
 //	@Produce		json
-//	@Param			payload	body		GenerateAuthTokenPayload	true	"User credentials"
-//	@Success		200		{object}	string						"Token"
+//	@Param			payload	body		CreateUserTokenPayload	true	"User credentials"
+//	@Success		200		{string}	string					"Token"
 //	@Failure		400		{object}	error
 //	@Failure		401		{object}	error
 //	@Failure		500		{object}	error
 //	@Router			/authentication/token [post]
-func (app *application) generateTokenHandler(w http.ResponseWriter, r *http.Request) {
-	// parse payload = credentials
-	var payload GenerateAuthTokenPayload
+func (app *application) createTokenHandler(w http.ResponseWriter, r *http.Request) {
+	var payload CreateUserTokenPayload
 	if err := readJSON(w, r, &payload); err != nil {
 		app.badRequestResponse(w, r, err)
 		return
 	}
-
 	if err := Validate.Struct(payload); err != nil {
 		app.badRequestResponse(w, r, err)
 		return
 	}
-
-	// fetch the user(check if user exists) from the payload
 	user, err := app.store.User.GetByEmail(r.Context(), payload.Email)
 	if err != nil {
 		switch err {
@@ -146,13 +142,6 @@ func (app *application) generateTokenHandler(w http.ResponseWriter, r *http.Requ
 		}
 		return
 	}
-
-	if err := user.Password.Compare(payload.Password); err != nil {
-		app.unauthorizedErrorResponse(w, r, err)
-		return
-	}
-
-	// generate token -> add claims
 	claims := jwt.MapClaims{
 		"sub": user.ID,
 		"exp": time.Now().Add(app.config.auth.token.exp).Unix(),
@@ -166,9 +155,6 @@ func (app *application) generateTokenHandler(w http.ResponseWriter, r *http.Requ
 		app.internalServerError(w, r, err)
 		return
 	}
-
-	// send it to the client
-
 	if err := app.jsonResponse(w, http.StatusCreated, token); err != nil {
 		app.internalServerError(w, r, err)
 	}

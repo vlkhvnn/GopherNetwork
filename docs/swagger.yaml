@@ -16,7 +16,7 @@ definitions:
     - content
     - title
     type: object
-  main.GenerateAuthTokenPayload:
+  main.CreateUserTokenPayload:
     properties:
       email:
         maxLength: 255
@@ -133,6 +133,17 @@ definitions:
       version:
         type: integer
     type: object
+  store.Role:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      level:
+        type: integer
+      name:
+        type: string
+    type: object
   store.User:
     properties:
       created_at:
@@ -143,6 +154,10 @@ definitions:
         type: integer
       is_active:
         type: boolean
+      role:
+        $ref: '#/definitions/store.Role'
+      role_id:
+        type: integer
       username:
         type: string
     type: object
@@ -162,14 +177,14 @@ paths:
     post:
       consumes:
       - application/json
-      description: Generates an auth bearer token
+      description: Creates a token for a user
       parameters:
       - description: User credentials
         in: body
         name: payload
         required: true
         schema:
-          $ref: '#/definitions/main.GenerateAuthTokenPayload'
+          $ref: '#/definitions/main.CreateUserTokenPayload'
       produces:
       - application/json
       responses:
@@ -186,7 +201,7 @@ paths:
         "500":
           description: Internal Server Error
           schema: {}
-      summary: Generates an auth bearer token
+      summary: Creates a token
       tags:
       - authentication
   /authentication/user:
@@ -264,6 +279,37 @@ paths:
       tags:
       - posts
   /posts/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a post by ID
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Deletes a post
+      tags:
+      - posts
     get:
       consumes:
       - application/json
@@ -292,7 +338,7 @@ paths:
       summary: Fetches a post
       tags:
       - posts
-    put:
+    patch:
       consumes:
       - application/json
       description: Updates a post by ID
