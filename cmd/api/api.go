@@ -4,6 +4,7 @@ import (
 	"GopherNetwork/internal/auth"
 	"GopherNetwork/internal/mailer"
 	"GopherNetwork/internal/store"
+	"GopherNetwork/internal/store/cache"
 	"fmt"
 	"net/http"
 	"time"
@@ -19,6 +20,7 @@ import (
 type application struct {
 	config        config
 	store         store.Storage
+	cacheStorage  cache.Storage
 	logger        *zap.SugaredLogger
 	mailer        mailer.Client
 	authenticator auth.Authenticator
@@ -32,6 +34,14 @@ type config struct {
 	mail        mailConfig
 	frontendURL string
 	auth        authConfig
+	redis       redisConfig
+}
+
+type redisConfig struct {
+	addr    string
+	pw      string
+	db      int
+	enabled bool
 }
 
 type authConfig struct {
@@ -98,8 +108,8 @@ func (app *application) mount() *chi.Mux {
 
 			r.Route("/{userId}", func(r chi.Router) {
 				r.Use(app.AuthTokenMiddleware)
-				r.Get("/", app.getUserHandler)
 
+				r.Get("/", app.getUserHandler)
 				r.Put("/follow", app.followUserHandler)
 				r.Put("/unfollow", app.unfollowUserHandler)
 			})

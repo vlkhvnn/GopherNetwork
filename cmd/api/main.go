@@ -6,8 +6,10 @@ import (
 	"GopherNetwork/internal/env"
 	"GopherNetwork/internal/mailer"
 	"GopherNetwork/internal/store"
+	"GopherNetwork/internal/store/cache"
 	"time"
 
+	"github.com/go-redis/redis/v8"
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"
 )
@@ -50,6 +52,12 @@ func main() {
 			maxIdleConns: env.GetInt("DB_MAX_IDLE_CONNS", 30),
 			maxIdleTime:  env.GetString("DB_MAX_IDLE_TIME", "15m"),
 		},
+		redis: redisConfig{
+			addr:    env.GetString("REDIS_ADDR", "localhost:6379"),
+			pw:      env.GetString("REDIS_PW", ""),
+			db:      env.GetInt("REDIS_DB", 0),
+			enabled: env.GetBool("REDIS_ENABLED", true),
+		},
 		env: env.GetString("ENV", "development"),
 		mail: mailConfig{
 			exp: time.Hour * 24 * 3, // 3 days,
@@ -86,6 +94,18 @@ func main() {
 	logger.Info("DB connection pool established")
 
 	store := store.NewStorage(db)
+	// Cache
+	var rdb *redis.Client
+	if cfg.redis.enabled {
+		rdb = cache.NewRedisClient(
+			cfg.redis.addr,
+			cfg.redis.pw,
+			cfg.redis.db,
+		)
+		logger.Info("redis cache connection pool established")
+		defer rdb.Close()
+	}
+	cacheStorage := cache.NewRedisStorage(rdb)
 
 	mailtrap, err := mailer.NewMailTrapClient(cfg.mail.mailtrap.apiKey, cfg.mail.fromEmail)
 	if err != nil {
@@ -97,6 +117,7 @@ func main() {
 	app := &application{
 		config:        cfg,
 		store:         store,
+		cacheStorage:  cacheStorage,
 		logger:        logger,
 		mailer:        mailtrap,
 		authenticator: jwtAuthenticator,
