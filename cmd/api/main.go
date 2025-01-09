@@ -5,6 +5,7 @@ import (
 	"GopherNetwork/internal/db"
 	"GopherNetwork/internal/env"
 	"GopherNetwork/internal/mailer"
+	"GopherNetwork/internal/ratelimiter"
 	"GopherNetwork/internal/store"
 	"GopherNetwork/internal/store/cache"
 	"time"
@@ -77,6 +78,11 @@ func main() {
 				iss:    "gophernetwork",
 			},
 		},
+		rateLimiter: ratelimiter.Config{
+			RequestsPerTimeFrame: env.GetInt("RATELIMITER_REQUESTS_COUNT", 20),
+			TimeFrame:            time.Second * 5,
+			Enabled:              env.GetBool("RATE_LIMITER_ENABLED", true),
+		},
 	}
 
 	db, err := db.New(
@@ -114,6 +120,11 @@ func main() {
 
 	jwtAuthenticator := auth.NewJWTAuthenticator(cfg.auth.token.secret, cfg.auth.token.iss, cfg.auth.token.iss)
 
+	rateLimiter := ratelimiter.NewFixedWindowLimiter(
+		cfg.rateLimiter.RequestsPerTimeFrame,
+		cfg.rateLimiter.TimeFrame,
+	)
+
 	app := &application{
 		config:        cfg,
 		store:         store,
@@ -121,6 +132,7 @@ func main() {
 		logger:        logger,
 		mailer:        mailtrap,
 		authenticator: jwtAuthenticator,
+		rateLimiter:   rateLimiter,
 	}
 
 	mux := app.mount()
