@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/vlkhvnn/GopherNetwork/compare/v1.0.0...v1.1.0) (2025-01-14)
+
+
+### Features
+
+* update api version automatically ([c9cace2](https://github.com/vlkhvnn/GopherNetwork/commit/c9cace2a43576de84342adf9494b6fe75ebde7e9))
+
 ## 1.0.0 (2025-01-14)
 
 
