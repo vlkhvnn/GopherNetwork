@@ -2,21 +2,6 @@
 
 GopherNetwork is a distributed network system built with Go. It is designed to provide a robust and scalable platform for network communication and data exchange. The project leverages modern technologies—including Go for the backend and TypeScript, JavaScript, and CSS for the frontend—to offer an integrated solution for networked applications.
 
-## Overview
-
-GopherNetwork is a comprehensive network system built to handle scalable network communication and data exchange. With a modular architecture, it supports easy integration and extension for various networking scenarios. Designed with performance and scalability in mind, GopherNetwork is suitable for both small-scale projects and enterprise-level applications.
-
-## Features
-
-- **Scalable Architecture:**  
-  Built with modular design principles to support scalability and maintainability.
-- **Real-Time Communication:**  
-  Facilitates efficient real-time data exchange across distributed systems.
-- **Containerized Deployment:**  
-  Includes Docker Compose configuration for streamlined local development and deployment.
-- **Robust Backend:**  
-  Powered by Go to leverage high performance, concurrency, and reliability.
-
 ## Project Structure
 
 The repository is organized as follows:
@@ -70,6 +55,14 @@ The repository is organized as follows:
    docker-compose up
    cd cmd
    air
+   ```
+4. **Migrations:**
+   ```bash
+   make migrate-up
+   ```
+5. **UI links:**  
+   http://localhost:8080/v1/swagger/index.html  
+   http://127.0.0.1:8081/  
 Make sure you have set up any necessary environment variables or configuration files as required by the service.
 
 ## Configuration
