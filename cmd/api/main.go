@@ -38,7 +38,7 @@ const version = "1.1.0"
 func main() {
 	logger := zap.Must(zap.NewProduction()).Sugar()
 	defer logger.Sync()
-	err := godotenv.Load()
+	err := godotenv.Load("../../.env")
 	if err != nil {
 		logger.Fatal("Error loading .env file")
 	}

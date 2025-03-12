@@ -65,10 +65,10 @@ func (app *application) getUserHandler(w http.ResponseWriter, r *http.Request) {
 //	@Failure		400		{object}	error	"User payload missing"
 //	@Failure		404		{object}	error	"User not found"
 //	@Security		ApiKeyAuth
-//	@Router			/users/{userID}/follow [put]
+//	@Router			/users/{userId}/follow [put]
 func (app *application) followUserHandler(w http.ResponseWriter, r *http.Request) {
 	follower := getUserFromContext(r)
-	followedId, err := strconv.ParseInt(chi.URLParam(r, "userID"), 10, 64)
+	followedId, err := strconv.ParseInt(chi.URLParam(r, "userId"), 10, 64)
 	if err != nil {
 		app.badRequestResponse(w, r, err)
 		return

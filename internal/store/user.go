@@ -90,7 +90,7 @@ func (s *UserStore) Create(ctx context.Context, tx *sql.Tx, user *User) error {
 
 func (s *UserStore) GetById(ctx context.Context, id int64) (*User, error) {
 	query := `
-	SELECT users.id, username, email, password, created_at, roles.*
+	SELECT users.id, username, email, password, created_at, is_active, roles.*
 	FROM users
 	JOIN roles ON (users.role_id = roles.id)
 	WHERE users.id = $1
@@ -104,6 +104,7 @@ func (s *UserStore) GetById(ctx context.Context, id int64) (*User, error) {
 		&user.Email,
 		&user.Password.hash,
 		&user.CreatedAt,
+		&user.IsActive,
 		&user.Role.Id,
 		&user.Role.Name,
 		&user.Role.Level,
