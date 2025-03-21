@@ -54,6 +54,7 @@ The repository is organized as follows:
    ```bash
    docker-compose up
    cd cmd
+   cd api
    air
    ```
 4. **Migrations:**
