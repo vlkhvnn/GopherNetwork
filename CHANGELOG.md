@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/vlkhvnn/GopherNetwork/compare/v1.1.0...v1.2.0) (2025-03-21)
+
+
+### Features
+
+* adding DockerFile ([3571bbc](https://github.com/vlkhvnn/GopherNetwork/commit/3571bbc305807b872597da90ad7fbb25e2886d57))
+
 ## [1.1.0](https://github.com/vlkhvnn/GopherNetwork/compare/v1.0.0...v1.1.0) (2025-01-14)
 
 
