@@ -2,7 +2,8 @@ package main
 
 import (
 	"GopherNetwork/internal/mailer"
-	"GopherNetwork/internal/store"
+	"GopherNetwork/internal/models"
+	"GopherNetwork/internal/storage"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -21,7 +22,7 @@ type RegisterUserPayload struct {
 }
 
 type UserWithToken struct {
-	User  *store.User
+	User  *models.User
 	Token string `json:"token"`
 }
 
@@ -54,12 +55,12 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	user := &store.User{
+	user := &models.User{
 		Username: payload.Username,
 		Email:    payload.Email,
 	}
 
-	if err := user.Password.Set(payload.Password); err != nil {
+	if err := user.SetPassword(payload.Password); err != nil {
 		app.internalServerError(w, r, err)
 		return
 	}
@@ -68,10 +69,10 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 	plainToken := uuid.New().String()
 	hash := sha256.Sum256([]byte(plainToken))
 	hashToken := hex.EncodeToString(hash[:])
-	if err := app.store.User.CreateAndInvite(ctx, user, hashToken, app.config.mail.exp); err != nil {
+	if err := app.store.UserStore.CreateAndInvite(ctx, user, hashToken); err != nil {
 		switch err {
-		case store.ErrDuplicateEmail, store.ErrDuplicateUsername:
-			app.badRequestResponse(w, r, err)
+		// case storage.ErrDuplicateEmail, storage.ErrDuplicateUsername:
+		// 	app.badRequestResponse(w, r, err)
 		default:
 			app.internalServerError(w, r, err)
 		}
@@ -99,7 +100,7 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		app.logger.Errorw("Error sending a welcome email", "error", err)
 		//rollback user creation if email sending fails (SAGA)
-		if err := app.store.User.Delete(ctx, user.ID); err != nil {
+		if err := app.store.UserStore.Delete(ctx, user.ID); err != nil {
 			app.logger.Errorw("Error deleting a user", "error", err)
 		}
 
@@ -135,10 +136,10 @@ func (app *application) createTokenHandler(w http.ResponseWriter, r *http.Reques
 		app.badRequestResponse(w, r, err)
 		return
 	}
-	user, err := app.store.User.GetByEmail(r.Context(), payload.Email)
+	user, err := app.store.UserStore.GetByEmail(r.Context(), payload.Email)
 	if err != nil {
 		switch err {
-		case store.ErrNotFound:
+		case storage.ErrNotFound:
 			app.unauthorizedErrorResponse(w, r, err)
 		default:
 			app.internalServerError(w, r, err)

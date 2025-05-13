@@ -1,7 +1,8 @@
 package main
 
 import (
-	"GopherNetwork/internal/store"
+	"GopherNetwork/internal/models"
+	"GopherNetwork/internal/storage"
 	"net/http"
 	"strconv"
 
@@ -39,7 +40,7 @@ func (app *application) getUserHandler(w http.ResponseWriter, r *http.Request) {
 	user, err := app.getUser(r.Context(), userId)
 	if err != nil {
 		switch err {
-		case store.ErrNotFound:
+		case storage.ErrNotFound:
 			app.notFoundResponse(w, r, err)
 			return
 		default:
@@ -76,7 +77,7 @@ func (app *application) followUserHandler(w http.ResponseWriter, r *http.Request
 
 	ctx := r.Context()
 
-	if err := app.store.Followers.Follow(ctx, follower.ID, followedId); err != nil {
+	if err := app.store.FollowerStore.Follow(ctx, follower.ID, followedId); err != nil {
 		app.internalServerError(w, r, err)
 		return
 	}
@@ -110,7 +111,7 @@ func (app *application) unfollowUserHandler(w http.ResponseWriter, r *http.Reque
 
 	ctx := r.Context()
 
-	if err := app.store.Followers.Unfollow(ctx, follower.ID, followedId); err != nil {
+	if err := app.store.FollowerStore.Unfollow(ctx, follower.ID, followedId); err != nil {
 		app.internalServerError(w, r, err)
 		return
 	}
@@ -136,9 +137,9 @@ func (app *application) unfollowUserHandler(w http.ResponseWriter, r *http.Reque
 //	@Router			/users/activate/{token} [put]
 func (app *application) activateUserHandler(w http.ResponseWriter, r *http.Request) {
 	token := chi.URLParam(r, "token")
-	if err := app.store.User.Activate(r.Context(), token); err != nil {
+	if err := app.store.UserStore.Activate(r.Context(), token); err != nil {
 		switch err {
-		case store.ErrNotFound:
+		case storage.ErrNotFound:
 			app.notFoundResponse(w, r, err)
 		default:
 			app.internalServerError(w, r, err)
@@ -152,7 +153,7 @@ func (app *application) activateUserHandler(w http.ResponseWriter, r *http.Reque
 	}
 }
 
-func getUserFromContext(r *http.Request) *store.User {
-	user, _ := r.Context().Value(userCtx).(*store.User)
+func getUserFromContext(r *http.Request) *models.User {
+	user, _ := r.Context().Value(userCtx).(*models.User)
 	return user
 }

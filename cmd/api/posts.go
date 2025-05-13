@@ -1,7 +1,8 @@
 package main
 
 import (
-	"GopherNetwork/internal/store"
+	"GopherNetwork/internal/models"
+	"GopherNetwork/internal/storage"
 	"context"
 	"errors"
 	"net/http"
@@ -53,16 +54,15 @@ func (app *application) createPostHandler(w http.ResponseWriter, r *http.Request
 
 	user := getUserFromContext(r)
 
-	post := &store.Post{
+	post := &models.Post{
 		Title:   payload.Title,
 		Content: payload.Content,
-		Tags:    payload.Tags,
 		UserID:  user.ID,
 	}
 
 	ctx := r.Context()
 
-	if err := app.store.Post.Create(ctx, post); err != nil {
+	if err := app.store.PostStore.Create(ctx, post); err != nil {
 		app.internalServerError(w, r, err)
 		return
 	}
@@ -89,7 +89,7 @@ func (app *application) createPostHandler(w http.ResponseWriter, r *http.Request
 func (app *application) getPostHandler(w http.ResponseWriter, r *http.Request) {
 	post := getPostFromCtx(r)
 
-	comments, err := app.store.Comment.GetByPostId(r.Context(), post.ID)
+	comments, err := app.store.CommentStore.GetByPostId(r.Context(), post.ID)
 	if err != nil {
 		app.internalServerError(w, r, err)
 		return
@@ -125,9 +125,9 @@ func (app *application) deletePostHandler(w http.ResponseWriter, r *http.Request
 		app.internalServerError(w, r, err)
 		return
 	}
-	if err := app.store.Post.DeleteById(ctx, id); err != nil {
+	if err := app.store.PostStore.DeleteById(ctx, id); err != nil {
 		switch {
-		case errors.Is(err, store.ErrNotFound):
+		case errors.Is(err, storage.ErrNotFound):
 			app.notFoundResponse(w, r, err)
 		default:
 			app.internalServerError(w, r, err)
@@ -175,7 +175,7 @@ func (app *application) updatePostHandler(w http.ResponseWriter, r *http.Request
 		post.Title = *payload.Title
 	}
 
-	if err := app.store.Post.Update(r.Context(), post); err != nil {
+	if err := app.store.PostStore.Update(r.Context(), post); err != nil {
 		app.internalServerError(w, r, err)
 		return
 	}
@@ -196,10 +196,10 @@ func (app *application) postContextMiddleware(next http.Handler) http.Handler {
 		}
 
 		ctx := r.Context()
-		post, err := app.store.Post.GetById(ctx, id)
+		post, err := app.store.PostStore.GetById(ctx, id)
 		if err != nil {
 			switch {
-			case errors.Is(err, store.ErrNotFound):
+			case errors.Is(err, storage.ErrNotFound):
 				app.notFoundResponse(w, r, err)
 			default:
 				app.internalServerError(w, r, err)
@@ -212,7 +212,7 @@ func (app *application) postContextMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func getPostFromCtx(r *http.Request) *store.Post {
-	post, _ := r.Context().Value(postCtx).(*store.Post)
+func getPostFromCtx(r *http.Request) *models.Post {
+	post, _ := r.Context().Value(postCtx).(*models.Post)
 	return post
 }

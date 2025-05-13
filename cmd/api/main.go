@@ -6,9 +6,10 @@ import (
 	"GopherNetwork/internal/env"
 	"GopherNetwork/internal/mailer"
 	"GopherNetwork/internal/ratelimiter"
-	"GopherNetwork/internal/store"
-	"GopherNetwork/internal/store/cache"
+	"GopherNetwork/internal/storage/cache"
 	"time"
+
+	"GopherNetwork/internal/storage"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/joho/godotenv"
@@ -96,10 +97,14 @@ func main() {
 		logger.Fatal(err)
 	}
 
-	defer db.Close()
+	sqlDB, err := db.DB()
+	if err != nil {
+		logger.Fatal(err)
+	}
+	defer sqlDB.Close()
 	logger.Info("DB connection pool established")
 
-	store := store.NewStorage(db)
+	store := storage.NewStorage(db)
 	// Cache
 	var rdb *redis.Client
 	if cfg.redis.enabled {

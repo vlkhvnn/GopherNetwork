@@ -1,7 +1,8 @@
 package main
 
 import (
-	"GopherNetwork/internal/store"
+	"GopherNetwork/internal/models"
+	"GopherNetwork/internal/storage"
 	"context"
 	"encoding/base64"
 	"fmt"
@@ -113,30 +114,37 @@ func (app *application) checkPostOwnershipMiddleware(requiredRole string, next h
 		next.ServeHTTP(w, r)
 	})
 }
-func (app *application) checkRolePrecedence(ctx context.Context, user *store.User, requiredRole string) (bool, error) {
-	role, err := app.store.Role.GetByName(ctx, requiredRole)
+func (app *application) checkRolePrecedence(ctx context.Context, user *models.User, requiredRole string) (bool, error) {
+	role, err := app.store.RoleStore.GetByName(ctx, requiredRole)
 	if err != nil {
 		return false, err
 	}
 	return user.Role.Level >= role.Level, nil
 }
 
-func (app *application) getUser(ctx context.Context, userID int64) (*store.User, error) {
+func (app *application) getUser(ctx context.Context, userID int64) (*models.User, error) {
 	if !app.config.redis.enabled {
-		return app.store.User.GetById(ctx, userID)
+		return app.store.UserStore.GetByID(ctx, userID)
 	}
-	user, err := app.cacheStorage.Users.Get(ctx, userID)
+	// user, err := app.cacheStorage.Users.Get(ctx, userID)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// if user == nil {
+	// 	user, err = app.store.UserStore.GetByID(ctx, userID)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// 	if err := app.cacheStorage.Users.Set(ctx, user); err != nil {
+	// 		return nil, err
+	// 	}
+	// }
+	user, err := app.store.UserStore.GetByID(ctx, userID)
 	if err != nil {
+		if err == storage.ErrNotFound {
+			return nil, storage.ErrNotFound
+		}
 		return nil, err
-	}
-	if user == nil {
-		user, err = app.store.User.GetById(ctx, userID)
-		if err != nil {
-			return nil, err
-		}
-		if err := app.cacheStorage.Users.Set(ctx, user); err != nil {
-			return nil, err
-		}
 	}
 	return user, nil
 }

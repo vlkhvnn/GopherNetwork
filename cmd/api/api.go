@@ -4,8 +4,8 @@ import (
 	"GopherNetwork/internal/auth"
 	"GopherNetwork/internal/mailer"
 	"GopherNetwork/internal/ratelimiter"
-	"GopherNetwork/internal/store"
-	"GopherNetwork/internal/store/cache"
+	"GopherNetwork/internal/storage"
+	"GopherNetwork/internal/storage/cache"
 	"context"
 	"errors"
 	"fmt"
@@ -26,7 +26,7 @@ import (
 
 type application struct {
 	config        config
-	store         store.Storage
+	store         *storage.Storage
 	cacheStorage  cache.Storage
 	logger        *zap.SugaredLogger
 	mailer        mailer.Client

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"GopherNetwork/internal/store"
+	"GopherNetwork/internal/storage"
 	"net/http"
 )
 
@@ -25,7 +25,7 @@ import (
 //	@Security		ApiKeyAuth
 //	@Router			/users/feed [get]
 func (app *application) getUserFeedHandler(w http.ResponseWriter, r *http.Request) {
-	fq := store.PaginatedFeedQuery{
+	fq := storage.PaginatedFeedQuery{
 		Limit:  20,
 		Offset: 0,
 		Sort:   "desc",
@@ -45,7 +45,7 @@ func (app *application) getUserFeedHandler(w http.ResponseWriter, r *http.Reques
 	ctx := r.Context()
 	user := getUserFromContext(r)
 
-	feed, err := app.store.Post.GetUserFeed(ctx, user.ID, fq)
+	feed, err := app.store.PostStore.GetUserFeed(ctx, user.ID, fq)
 	if err != nil {
 		app.internalServerError(w, r, err)
 		return

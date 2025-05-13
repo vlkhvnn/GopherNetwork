@@ -1,1 +1,0 @@
-ALTER TABLE IS EXISTS users DROP COLUMN role_id;
