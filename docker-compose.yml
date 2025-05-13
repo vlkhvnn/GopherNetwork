@@ -10,7 +10,6 @@ services:
       POSTGRES_PASSWORD: 1234
     volumes:
       - db-data:/var/lib/postgresql/data
-      - ./scripts:/docker-entrypoint-initdb.d
     ports:
       - "5432:5432"
   
